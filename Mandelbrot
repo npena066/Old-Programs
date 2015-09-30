@@ -1,0 +1,62 @@
+%Mandelbrot set
+
+clf
+clear
+
+xmin = -3;
+xmax = 3;
+ymin = -3;
+ymax = 3;
+
+%number of points = resolution in x and y direction
+nPoints = 500;
+
+%upper limit for |z|, consider series has diverged if exceeded
+zmax = 1e6;
+
+xstep=(xmax-xmin)/(nPoints-1);
+ystep=(ymax-ymin)/(nPoints-1);
+
+%the 'i' index walks along the 'x' direction
+for i=1:nPoints
+    % the 'j' index walks along the 'y' direction
+    for j=1:nPoints 
+
+        %%%% map the index 'i' onto the interval [xmin,xmax]
+        %%%% i=1       must yield 'xmin'
+        %%%% i=nPoints must yield 'xmax'
+        x(i) = xmin+(i-1)*xstep;
+
+        %%%% map the index 'j' onto the interval [ymin,ymax]
+        %%%% j=1       must yield 'ymin'
+        %%%% j=nPoints must yield 'ymax'
+        y(j) = ymin+(j-1)*ystep;
+
+        z = complex(x(i),y(j)); % this converts (x,y) to a complex number 'c'
+        c = complex(-0.4,0.6);   % iteration starts with complex number = 0
+        
+        it_max = 100;            % no more than 50 iterations please
+        for n = 1:it_max
+            %%%% add the iteration formula for the Mandelbrot set
+            z = z^2+c;
+            if abs(z) <= zmax
+                ZZ(j,i)=0;
+            else
+                ZZ(j,i)=n;
+                break
+            end
+        end
+        
+        %store the results in the matrix ZZ(nPoints,nPoints)
+        %if (abs(z)<=zmax)
+            %ZZ(j,i)=n;  % make it '0' for blue if |z| is small and series has not diverged
+        %else
+            %ZZ(j,i)=1;               % make it '1' for red  if |z| is large and series has diverged
+        %end
+
+    end
+    %fprintf('i= %d of %d points in X direction: x= %f\n',i,nPoints,x(i));
+end
+
+imagesc(x,y,ZZ); % plot the image
+set(gca,'YDir','normal');
