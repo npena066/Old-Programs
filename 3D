@@ -1,0 +1,49 @@
+clear all
+close all
+ 
+Nx=101;
+Ny=51;
+ 
+L=10;
+x=linspace(0,L,Nx+1);
+y=x;
+delta=L/Nx;
+%x=0:delta:L
+ 
+T=zeros(Ny+1,Nx+1);
+T(1,2:(Nx+1)/2)=7;
+T(1,(Nx+1)/2+2:Nx)=8;
+T(2:Ny,Nx+1)=8;
+T(2:Ny,1)=1;
+T(Ny+1,2:(Nx+1)/2)=2;
+T(Ny+1,(Nx+1)/2+2:Nx)=4;
+ 
+%midpoints
+T(1,1)=(7+1)/2;
+T(1,(Nx+1)/2+1)=(7+8)/2;
+T(1,Nx+1)=(8+8)/2;
+T(Ny+1,1)=(1+2)/2;
+T(Ny+1,(Nx+1)/2+1)=(4+2)/2;
+T(Ny+1,Nx+1)=(8+4)/2;
+ 
+Tnew=T;
+xx=0:L/Nx:L;
+yy=0:L/Ny:L;
+
+for k=1:5000
+    for j=2:Ny
+        for i=2:Nx
+            Tnew(j,i)=0.25*(T(j-1,i)+T(j+1,i)+T(j,i+1)+T(j,i-1));
+        end
+    end
+ 
+ 
+    [X,Y]=meshgrid(xx,yy);
+    surf(X,Y,T);
+    view([+34.5 14]);
+    pause(0.000000001)
+    
+    T=Tnew;
+end
+
+xlabel('S1=2, S2=4, S3=8, S4=8, S5=7, S6=1');
