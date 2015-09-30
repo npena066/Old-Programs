@@ -1,0 +1,53 @@
+function p=newtonbisection(f,df,a,b,tol)
+
+p=a;
+
+fprintf(' a             b              p             f(p)\n');
+
+fprintf('-----------------------------------------------------\n');
+
+while 1
+
+    p=p-f(p)/df(p);
+
+    disp('Newton');
+
+    x=[a,b,p,f(p)];
+
+    fprintf('%2d  %12.8f  %12.8f  %12.8f\n',a,b,p,f(p));
+
+    if p>b 
+
+        p=(a+b)/2;
+
+    end
+
+    if p<a || p>b
+
+        p=(a+b)/2;
+
+        disp('Bisection');
+
+        fprintf('%2d  %12.8f  %12.8f  %12.8f\n',a,b,p,f(p));
+
+        x=[a,b,p,f(p)];
+
+    end
+
+    if f(p)*f(b)<0
+
+        a=p;
+
+    else
+
+        b=p;
+
+    end
+
+    if abs(f(p))<tol
+
+        break
+
+    end
+
+end
