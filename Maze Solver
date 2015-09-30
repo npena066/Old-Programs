@@ -1,0 +1,243 @@
+clear all
+close all
+clf
+
+%read in image and convert to black and white
+I=imread('maze.jpg');
+% imshow(I);
+
+level=graythresh(I);
+bw=im2bw(I,level);
+%imshow(bw);
+bw90=flipud(bw);
+
+[n,m]=size(bw);
+A=zeros(n,m);
+detect=zeros(1,2);
+
+%row first then column
+%set maatrix into A, with 1's as walls 0's as empty
+for i=1:n
+    for j=1:m
+        if bw90(i,j)==0
+           A(i,j)=1;
+        end
+    end
+end
+
+%Memory matrix, invisible, where not to go
+B=A;
+flag=0;
+
+%Find start of maze
+for i=1:n
+    for j=1:m-1
+        if A(i,j)==1
+           if A(i,j+1)==0
+               detect=[i,j+1];
+               flag=1;
+               break
+           end
+        end
+    end
+    if flag==1
+        break
+    end
+end
+
+%Write block for entrance and find end of start
+startend=detect;
+B(startend(1):-1:1,startend(2))=2;
+while A(startend(1),startend(2)+1)~=1
+   startend=[startend(1),startend(2)+1];
+   B(startend(1):-1:1,startend(2))=2;
+end
+
+%Continue to write block for entrance
+while A(detect(1),detect(2)-1)==1
+   detect=[detect(1)+1,detect(2)];
+   B(detect(1),detect(2):startend(2))=2;
+end
+start=detect;
+
+detect=zeros(1,2);
+
+%Find end of maze
+for ii=n:-1:1
+    for jj=1:m-1
+        if A(ii,jj)==1
+           if A(ii,jj+1)==0
+               detect=[ii,jj+1];
+               flag=0;
+               break
+           end
+        end
+        if flag==0
+            break
+        end
+    end
+end
+
+%Find the end point for the exit and set a block for the exit
+stopend=[detect(1),detect(2)];
+B(stopend(1)+1:n,stopend(2))=3;
+while A(stopend(1),stopend(2)+1)~=1
+   stopend=[stopend(1),stopend(2)+1];
+   B(stopend(1)+1:n,stopend(2))=3;
+end
+
+%Take all points at exit and fill array
+stop=detect;
+endx=stop(1):stopend(1);
+endy=stop(2):stopend(2);
+
+%Initiate starting point for particle
+y=start(1);
+x=floor((startend(2)+start(2))/2);
+A(y,x)=1;
+
+%make variables for loop ready
+n=4;
+f=0;
+endflag=0;
+WallD=0;
+WallU=0;
+WallL=0;
+WallR=0;
+
+%Run loop as long as the position of the particle is not in sight of any of the
+%endpoints
+
+while 1%any(WallD:WallU==endx)~=1 || endflag~=1 %|| B(WallU,x)==3 || B(WallD,x)==3 || B(y,WallL)==3 || B(y,WallR)==3
+    
+    %initialize all variables for loop
+    yold=y;
+    xold=x;
+    endflag=0;
+    
+    WallU=yold+1;
+    sizeup=0;
+    noU=0;
+    
+    WallD=yold-1;
+    sizedown=0;
+    noD=0;
+    
+    WallR=xold+1;
+    sizeright=0;
+    noR=0;
+    
+    WallL=xold-1;
+    sizeleft=0;
+    noL=0;
+    
+    %Find walls and determine if the walls are remembered
+    while 1
+        if B(WallU+1,xold)==n
+            noU=1;
+            break
+        elseif any(B(WallU,xold)==[1,2,3,n])==1
+            WallU=WallU-1;
+            sizeup=size(yold:WallU,2);
+            break
+        end
+        WallU=WallU+1;
+    end
+    
+    while 1
+        if B(WallD-1,xold)==n
+            noD=1;
+            break
+        elseif any(B(WallD,xold)==[1,2,3,n])==1
+            WallD=WallD+1;
+            sizedown=size(WallD:yold,2);
+            break
+        end
+        
+        WallD=WallD-1;
+    end
+    
+    while 1
+        if B(yold,WallR+1)==n
+            noR=1;
+            break
+        elseif any(B(yold,WallR)==[1,2,3,n])==1
+            WallR=WallR-1;
+            sizeright=size(xold:WallR,2);
+            break
+        end
+        
+        WallR=WallR+1;
+    end
+    
+    while 1
+        if B(yold,WallL-1)==n
+            noL=1;
+            break
+        elseif any(B(yold,WallL)==[1,2,3,n])==1
+            WallL=WallL+1;
+            sizeleft=size(WallL:xold,2);
+            break
+        end
+        
+        WallL=WallL-1;
+    end
+    
+    %Test which has the greates distance to wall and then move
+    if sizeup>sizeleft && sizeup>sizeright && sizeup >sizedown
+        y=WallU;
+    elseif sizedown>sizeup && sizedown>sizeright && sizedown>sizeleft
+        y=WallD;
+    elseif sizeleft>sizeright && sizeleft>sizeup && sizeleft>sizedown
+        x=WallL;
+    elseif sizeright>sizeleft && sizeright>sizedown && sizeright>sizeup
+        x=WallR;
+    elseif noL+noR+noU+noD>0 %sizeright==sizeleft && sizeleft==sizeup && sizeup==sizedown
+        n=n+1;
+        continue
+    end
+    
+    %Fill in the path into matrix A and the remembered positions in B
+    if y>yold
+        B(WallD:y-1,WallL:WallR)=n;
+        A(yold:y,x)=0.6;
+    elseif yold>y
+        B(y+1:WallU,WallL:WallR)=n;
+        A(y:yold,x)=0.6;
+    elseif x>xold
+        B(WallD:WallU,WallL:x-1)=n;
+        A(y,xold:x)=0.6;
+    elseif xold>x
+        B(WallD:WallU,x+1:WallR)=n;
+        A(y,x:xold)=0.6;
+    end
+    
+    %Graph everything
+    hold on
+    imagesc(A);
+    set(gca,'YDir','normal');
+    colormap(jet);
+    axis equal;
+    axis tight;
+    drawnow
+    
+    %test for endpoint of sight
+    for testforendy=1:size(endy)
+       if any(WallL:WallU==endy(testforendy))==1 && any(WallD:WallU==endx)==1
+           endflag=1;
+           break
+       end
+    end
+    
+    if endflag==1
+        break
+    end
+    
+    
+%     f=f+1;
+%     axis equal
+%     saveas(gcf, ['final_maze_2_',sprintf('%03d',f),'.png'])
+%     pause(0.01)
+end
+
+fprintf('\nYay You are Done\n')
